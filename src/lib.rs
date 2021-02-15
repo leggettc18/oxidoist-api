@@ -1,9 +1,10 @@
 use serde::{Serialize, Deserialize};
 use reqwest::header;
 
-const base_url: &str = "https://api.todoist.com/rest/v1/";
+const BASE_URL: &str = "https://api.todoist.com/rest/v1/";
 
 #[derive(Debug)]
+#[allow(dead_code)]
 enum TodoistAPIError {
     Error(reqwest::Error),
     InvalidHeaderValue(reqwest::header::InvalidHeaderValue)
@@ -15,7 +16,8 @@ struct TodoistAPI{
 }
 
 impl TodoistAPI {
-    fn new(token: &str) -> Result<TodoistAPI, TodoistAPIError> {
+    #[allow(dead_code)]
+    pub fn new(token: &str) -> Result<TodoistAPI, TodoistAPIError> {
         let mut headers = header::HeaderMap::new();
         let header_token_value = header::HeaderValue::from_str(token).map_err(TodoistAPIError::InvalidHeaderValue)?;
         headers.insert(header::AUTHORIZATION, header_token_value);
