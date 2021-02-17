@@ -17,38 +17,44 @@ pub enum TodoistAPIError {
 #[derive(Debug)]
 pub struct TodoistAPI{
     base_url: Url,
-    token: String,
+    client: Client,
 }
 
 impl TodoistAPI {
     #[allow(dead_code)]
     pub fn new(token: &str) -> Result<TodoistAPI, TodoistAPIError> {
         let base_url = Url::parse(BASE_URL).map_err(TodoistAPIError::UrlParseError)?;
-        return Ok(TodoistAPI{ base_url, token: token.to_string() })
-    }
-
-    fn build_client(&self) -> Result<Client, TodoistAPIError> {
         let mut headers = header::HeaderMap::new();
-        let mut token: String = "Bearer ".to_string();
-        token.push_str(&self.token);
-        let header_token_value = header::HeaderValue::from_str(&token).map_err(TodoistAPIError::InvalidHeaderValue)?;
+        let mut bearer_token: String = "Bearer ".to_string();
+        bearer_token.push_str(&token);
+        let header_token_value = header::HeaderValue::from_str(&bearer_token).map_err(TodoistAPIError::InvalidHeaderValue)?;
         headers.insert(header::HeaderName::from_bytes(b"Authorization").map_err(TodoistAPIError::InvalidHeaderName)?, header_token_value);
         let client = reqwest::Client::builder()
             .default_headers(headers)
             .build().map_err(TodoistAPIError::Error)?;
-        return Ok(client)
+        return Ok(TodoistAPI{ base_url, client })
     }
 
     #[allow(dead_code)]
     pub async fn get_projects(&self) -> Result<Vec<Project>, TodoistAPIError> {
-        let client = self.build_client()?;
         let url = self.base_url.join("projects").map_err(TodoistAPIError::UrlParseError)?;
-        let projects = client.get(url)
+        let projects = self.client.get(url)
             .send()
             .await.map_err(TodoistAPIError::Error)?
             .json::<Vec<Project>>()
             .await.map_err(TodoistAPIError::Error)?;
         return Ok(projects);
+    }
+
+    #[allow(dead_code)]
+    pub async fn get_project(&self, id: u32) -> Result<Project, TodoistAPIError> {
+        let url = self.base_url.join("projects/").map_err(TodoistAPIError::UrlParseError)?.join(format!("{}", id).as_str()).map_err(TodoistAPIError::UrlParseError)?;
+        let project = self.client.get(url)
+            .send()
+            .await.map_err(TodoistAPIError::Error)?
+            .json::<Project>()
+            .await.map_err(TodoistAPIError::Error)?;
+        return Ok(project)
     }
 }
 
