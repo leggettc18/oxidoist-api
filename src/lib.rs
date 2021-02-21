@@ -4,6 +4,9 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+#[macro_use]
+extern crate derive_builder;
+
 const BASE_URL: &str = "https://api.todoist.com/rest/v1/";
 
 #[derive(Debug)]
@@ -13,6 +16,7 @@ pub enum TodoistAPIError {
     InvalidHeaderValue(reqwest::header::InvalidHeaderValue),
     InvalidHeaderName(reqwest::header::InvalidHeaderName),
     UrlParseError(url::ParseError),
+    ParamsBuilderError(String),
 }
 
 #[derive(Debug)]
@@ -80,11 +84,29 @@ impl TodoistAPI {
         return Ok(project);
     }
 
-    pub async fn get_tasks(&self) -> Result<Vec<Task>, TodoistAPIError> {
-        let url = self
+    async fn get_tasks(&self, data: TaskParams) -> Result<Vec<Task>, TodoistAPIError> {
+        let mut url = self
             .base_url
             .join("tasks")
             .map_err(TodoistAPIError::UrlParseError)?;
+        if let Some(project_id) = data.project_id {
+            url.query_pairs_mut()
+                .append_pair("project_id", &*project_id.to_string());
+        }
+        if let Some(label_id) = data.label_id {
+            url.query_pairs_mut()
+                .append_pair("label_id", &*label_id.to_string());
+        }
+        if let Some(filter) = data.filter {
+            url.query_pairs_mut().append_pair("filter", &*filter);
+        }
+        if let Some(lang) = data.lang {
+            url.query_pairs_mut().append_pair("lang", &*lang);
+        }
+        if let Some(ids) = data.ids {
+            url.query_pairs_mut()
+                .append_pair("ids", &*format!("{:?}", ids));
+        }
         let task = self
             .client
             .get(url)
@@ -95,15 +117,6 @@ impl TodoistAPI {
             .await
             .map_err(TodoistAPIError::Error)?;
         return Ok(task);
-    }
-
-    pub async fn get_project_tasks(&self, id: u64) -> Result<Vec<Task>, TodoistAPIError> {
-        let tasks = self.get_tasks().await?;
-        let project_tasks: Vec<Task> = tasks
-            .into_iter()
-            .filter(|task| task.project_id == id)
-            .collect();
-        return Ok(project_tasks);
     }
 }
 
@@ -164,12 +177,11 @@ impl Project {
         return Ok(project);
     }
     pub async fn get_tasks(&self, client: &TodoistAPI) -> Result<Vec<Task>, TodoistAPIError> {
-        let tasks = Task::get_all(client).await?;
-        let project_tasks: Vec<Task> = tasks
-            .into_iter()
-            .filter(|task| task.project_id == self.id)
-            .collect();
-        return Ok(project_tasks);
+        let tasks = TaskParamsBuilder::default()
+            .project_id(self.id)
+            .call(&client)
+            .await?;
+        return Ok(tasks);
     }
 }
 
@@ -206,6 +218,28 @@ impl Task {
             .await
             .map_err(TodoistAPIError::Error)?;
         return Ok(task);
+    }
+}
+
+#[derive(Default, Builder)]
+#[builder(build_fn(private))]
+struct TaskParams {
+    #[builder(setter(strip_option), default)]
+    pub project_id: Option<u64>,
+    #[builder(setter(strip_option), default)]
+    pub label_id: Option<u64>,
+    #[builder(setter(strip_option), default)]
+    pub filter: Option<String>,
+    #[builder(setter(strip_option), default)]
+    pub lang: Option<String>,
+    #[builder(setter(strip_option), default)]
+    pub ids: Option<Vec<u64>>,
+}
+
+impl TaskParamsBuilder {
+    pub async fn call(&self, client: &TodoistAPI) -> Result<Vec<Task>, TodoistAPIError> {
+        let data = self.build().map_err(TodoistAPIError::ParamsBuilderError)?;
+        client.get_tasks(data).await
     }
 }
 
