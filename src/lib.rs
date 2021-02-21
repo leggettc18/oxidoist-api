@@ -126,6 +126,53 @@ pub struct Project {
     sync_id: u64,
 }
 
+impl Project {
+    pub async fn get_all(client: &TodoistAPI) -> Result<Vec<Project>, TodoistAPIError> {
+        let url = client
+            .base_url
+            .join("projects")
+            .map_err(TodoistAPIError::UrlParseError)?;
+        let projects = client
+            .client
+            .get(url)
+            .send()
+            .await
+            .map_err(TodoistAPIError::Error)?
+            .json::<Vec<Project>>()
+            .await
+            .map_err(TodoistAPIError::Error)?;
+        return Ok(projects);
+    }
+
+    #[allow(dead_code)]
+    pub async fn get(id: u64, client: &TodoistAPI) -> Result<Project, TodoistAPIError> {
+        let url = client
+            .base_url
+            .join("projects/")
+            .map_err(TodoistAPIError::UrlParseError)?
+            .join(format!("{}", id).as_str())
+            .map_err(TodoistAPIError::UrlParseError)?;
+        let project = client
+            .client
+            .get(url)
+            .send()
+            .await
+            .map_err(TodoistAPIError::Error)?
+            .json::<Project>()
+            .await
+            .map_err(TodoistAPIError::Error)?;
+        return Ok(project);
+    }
+    pub async fn get_tasks(&self, client: &TodoistAPI) -> Result<Vec<Task>, TodoistAPIError> {
+        let tasks = Task::get_all(client).await?;
+        let project_tasks: Vec<Task> = tasks
+            .into_iter()
+            .filter(|task| task.project_id == self.id)
+            .collect();
+        return Ok(project_tasks);
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Task {
     id: u64,
@@ -141,6 +188,25 @@ pub struct Task {
     section_id: u64,
     parent_id: Option<u64>,
     url: String,
+}
+
+impl Task {
+    pub async fn get_all(client: &TodoistAPI) -> Result<Vec<Task>, TodoistAPIError> {
+        let url = client
+            .base_url
+            .join("tasks")
+            .map_err(TodoistAPIError::UrlParseError)?;
+        let task = client
+            .client
+            .get(url)
+            .send()
+            .await
+            .map_err(TodoistAPIError::Error)?
+            .json::<Vec<Task>>()
+            .await
+            .map_err(TodoistAPIError::Error)?;
+        return Ok(task);
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
