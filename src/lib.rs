@@ -2,6 +2,7 @@
 extern crate derive_builder;
 
 pub mod api;
+pub mod label;
 pub mod project;
 pub mod section;
 pub mod task;

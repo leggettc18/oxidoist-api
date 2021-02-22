@@ -3,6 +3,7 @@ use reqwest::Client;
 use url::Url;
 
 use crate::{
+    label::Label,
     project::Project,
     section::{Section, SectionParams},
     task::{Task, TaskParams},
@@ -139,5 +140,22 @@ impl TodoistAPI {
             .await
             .map_err(TodoistAPIError::Error)?;
         return Ok(sections);
+    }
+
+    pub async fn get_labels(&self) -> Result<Vec<Label>, TodoistAPIError> {
+        let url = self
+            .base_url
+            .join("labels")
+            .map_err(TodoistAPIError::UrlParseError)?;
+        let labels = self
+            .client
+            .get(url)
+            .send()
+            .await
+            .map_err(TodoistAPIError::Error)?
+            .json::<Vec<Label>>()
+            .await
+            .map_err(TodoistAPIError::Error)?;
+        return Ok(labels);
     }
 }
