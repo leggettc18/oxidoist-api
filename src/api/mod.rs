@@ -4,6 +4,7 @@ use url::Url;
 
 use crate::{
     project::Project,
+    section::{Section, SectionParams},
     task::{Task, TaskParams},
 };
 
@@ -107,7 +108,7 @@ impl TodoistAPI {
             url.query_pairs_mut()
                 .append_pair("ids", &*format!("{:?}", ids));
         }
-        let task = self
+        let tasks = self
             .client
             .get(url)
             .send()
@@ -116,6 +117,27 @@ impl TodoistAPI {
             .json::<Vec<Task>>()
             .await
             .map_err(TodoistAPIError::Error)?;
-        return Ok(task);
+        return Ok(tasks);
+    }
+
+    pub async fn get_sections(&self, data: SectionParams) -> Result<Vec<Section>, TodoistAPIError> {
+        let mut url = self
+            .base_url
+            .join("sections")
+            .map_err(TodoistAPIError::UrlParseError)?;
+        if let Some(project_id) = data.project_id {
+            url.query_pairs_mut()
+                .append_pair("project_id", &*project_id.to_string());
+        }
+        let sections = self
+            .client
+            .get(url)
+            .send()
+            .await
+            .map_err(TodoistAPIError::Error)?
+            .json::<Vec<Section>>()
+            .await
+            .map_err(TodoistAPIError::Error)?;
+        return Ok(sections);
     }
 }
