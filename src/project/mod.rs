@@ -1,5 +1,6 @@
 use crate::{
     api::{TodoistAPI, TodoistAPIError},
+    section::{Section, SectionParamsBuilder},
     task::{Task, TaskParamsBuilder},
 };
 use serde::{Deserialize, Serialize};
@@ -66,5 +67,12 @@ impl Project {
             .call(&client)
             .await?;
         return Ok(tasks);
+    }
+    pub async fn get_sections(&self, client: &TodoistAPI) -> Result<Vec<Section>, TodoistAPIError> {
+        let sections = SectionParamsBuilder::default()
+            .project_id(self.id)
+            .call(&client)
+            .await?;
+        return Ok(sections);
     }
 }
