@@ -71,27 +71,27 @@ impl TaskParamsBuilder {
 pub struct CreateTaskParams {
     #[builder(default)]
     content: String,
-    #[builder(setter(strip_option), default)]
+    #[builder(default)]
     project_id: Option<u64>,
-    #[builder(setter(strip_option), default)]
+    #[builder(default)]
     section_id: Option<u64>,
-    #[builder(setter(strip_option), default)]
+    #[builder(default)]
     parent_id: Option<u64>,
-    #[builder(setter(strip_option), default)]
+    #[builder(default)]
     order: Option<u64>,
-    #[builder(setter(strip_option), default)]
+    #[builder(default)]
     label_ids: Option<Vec<u64>>,
-    #[builder(setter(strip_option), default)]
+    #[builder(default)]
     priority: Option<u64>,
-    #[builder(setter(strip_option), default)]
+    #[builder(default)]
     due_string: Option<String>,
-    #[builder(setter(strip_option), default)]
+    #[builder(default)]
     due_date: Option<NaiveDate>,
-    #[builder(setter(strip_option), default)]
+    #[builder(default)]
     due_datetime: Option<DateTime<Utc>>,
-    #[builder(setter(strip_option), default)]
+    #[builder(default)]
     due_lang: Option<String>,
-    #[builder(setter(strip_option), default)]
+    #[builder(default)]
     assignee: Option<u64>,
 }
 
