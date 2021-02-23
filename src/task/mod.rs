@@ -36,6 +36,13 @@ impl Task {
             .map_err(TodoistAPIError::Error)?;
         return Ok(task);
     }
+    pub async fn create(
+        params: &CreateTaskParams,
+        client: &TodoistAPI,
+    ) -> Result<Task, TodoistAPIError> {
+        let task = client.create_task(params).await;
+        return task;
+    }
 }
 
 #[derive(Default, Builder)]
@@ -58,6 +65,34 @@ impl TaskParamsBuilder {
         let data = self.build().map_err(TodoistAPIError::ParamsBuilderError)?;
         client.get_tasks(data).await
     }
+}
+
+#[derive(Debug, Default, Builder, Serialize, Deserialize)]
+pub struct CreateTaskParams {
+    #[builder(default)]
+    content: String,
+    #[builder(setter(strip_option), default)]
+    project_id: Option<u64>,
+    #[builder(setter(strip_option), default)]
+    section_id: Option<u64>,
+    #[builder(setter(strip_option), default)]
+    parent_id: Option<u64>,
+    #[builder(setter(strip_option), default)]
+    order: Option<u64>,
+    #[builder(setter(strip_option), default)]
+    label_ids: Option<Vec<u64>>,
+    #[builder(setter(strip_option), default)]
+    priority: Option<u64>,
+    #[builder(setter(strip_option), default)]
+    due_string: Option<String>,
+    #[builder(setter(strip_option), default)]
+    due_date: Option<NaiveDate>,
+    #[builder(setter(strip_option), default)]
+    due_datetime: Option<DateTime<Utc>>,
+    #[builder(setter(strip_option), default)]
+    due_lang: Option<String>,
+    #[builder(setter(strip_option), default)]
+    assignee: Option<u64>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

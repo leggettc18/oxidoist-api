@@ -6,7 +6,7 @@ use crate::{
     label::Label,
     project::Project,
     section::{Section, SectionParams},
-    task::{Task, TaskParams},
+    task::{CreateTaskParams, Task, TaskParams},
 };
 
 const BASE_URL: &str = "https://api.todoist.com/rest/v1/";
@@ -157,5 +157,23 @@ impl TodoistAPI {
             .await
             .map_err(TodoistAPIError::Error)?;
         return Ok(labels);
+    }
+
+    pub async fn create_task(&self, params: &CreateTaskParams) -> Result<Task, TodoistAPIError> {
+        let url = self
+            .base_url
+            .join("tasks")
+            .map_err(TodoistAPIError::UrlParseError)?;
+        let task = self
+            .client
+            .post(url)
+            .json(params)
+            .send()
+            .await
+            .map_err(TodoistAPIError::Error)?
+            .json::<Task>()
+            .await
+            .map_err(TodoistAPIError::Error)?;
+        return Ok(task);
     }
 }
